@@ -1,10 +1,10 @@
 const puppeteer= require('puppeteer');
 const fs = require('fs');
 const fetch = require( 'node-fetch');
+const yargs = require('yargs');
 
-const targetSkyblog = 'dom-from2';
 const imgSelector = '.tagImageSkyrock';
-const pageCountSelector = 'ul.pagination>li.last>a';
+const pageCountSelector = 'ul.pagination>li:last-of-type>a';
 const downloadPath = 'images'
 
 if (!Array.prototype.last){
@@ -13,7 +13,7 @@ if (!Array.prototype.last){
     };
 }
 
-async function loadPage(index, browser) {
+async function loadPage(targetSkyblog, index, browser) {
     const page = await browser.newPage();
 
     await page.goto(`https://${targetSkyblog}.skyrock.com/${index}.html`);
@@ -29,7 +29,7 @@ async function loadPage(index, browser) {
     );
 
     // Download all images
-    links.map(l => l.replace('_small', '')).forEach(async link => {
+    links.map(l => l.replace('_small', '')).map(async link => {
         let srcArray = link.split('/');
         let pos = srcArray.length - 1;
         let filename = srcArray[pos];
@@ -42,17 +42,19 @@ async function downloadFile(url, outputPath) {
     response.body.pipe(fs.createWriteStream(outputPath));
 }
 
-async function loadAllPages() {
+async function loadAllPages(targetSkyblog) {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
-    await page.goto(`https://${targetSkyblog}.skyrock.com/`);
+    const skyblogUrl = `https://${targetSkyblog}.skyrock.com/`;
+    console.info('Loading all images from: ' + skyblogUrl);
+    await page.goto(skyblogUrl);
 
     // Wait for list items
     const liLast = pageCountSelector;
     await page.waitForSelector(liLast);
 
-    // Extract the images
+    // Extract the last paginator link element
     const list = await page.evaluate(
         liLast => [...document.querySelectorAll(liLast)]
             .map(anchor => anchor.href.trim()),
@@ -61,10 +63,27 @@ async function loadAllPages() {
     let value = parseInt(list[0].split('/').last().replace('.html', ''));
     for (let i = 1; i <= value; i++) {
         console.info(`Loading page ${i}/${value}`)
-        await loadPage(i, browser);
+        await loadPage(targetSkyblog, i, browser);
     }
 
     await browser.close();
 }
 
-loadAllPages();
+const argv = yargs.scriptName("sky-download")
+    .usage('Usage : $0 <cmd> --skyblogId [args]')
+    .command('sky-download', ' Downloads all pictures from a target skyblog', {
+        skyblogId: {
+            description: 'the target skyblog id, ie \'fun\' for https://fun.skyrock.com',
+            alias: 'id',
+            type: 'string'
+        }
+    })
+    .example('node index.js sky-download --skyblogId fun')
+    .demandOption(['skyblogId'])
+    .help()
+    .argv
+
+if (argv._.includes('sky-download')) {
+    const skyblogId = argv.skyblogId;
+    loadAllPages(skyblogId);
+}

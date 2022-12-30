@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "node-fetch": "^2.6.7",
-    "puppeteer": "^19.4.1"
+    "puppeteer": "^19.4.1",
+    "yargs": "^17.6.2"
   }
 }
