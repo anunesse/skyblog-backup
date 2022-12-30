@@ -1,5 +1,5 @@
 {
-  "name": "test-puppeteer",
+  "name": "skyblog-backup",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,8 +9,8 @@
   "author": "alex_nunes",
   "license": "ISC",
   "dependencies": {
-    "node-fetch": "^2.6.7",
-    "puppeteer": "^19.4.1",
-    "yargs": "^17.6.2"
+    "node-fetch": "2.6.7",
+    "puppeteer": "19.4.1",
+    "yargs": "17.6.2"
   }
 }
